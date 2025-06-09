@@ -1,0 +1,1201 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Number Pattern Tiles - 3D & Animasi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Roboto+Mono&family=Montserrat:wght@500;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <style>
+        /* CSS Umum */
+        * {
+            box-sizing: border-box;
+            transition: all 0.25s ease-in-out;
+        }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            margin: 0;
+            height: 100vh;
+            background: #f9fafb;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow: hidden; /* Mencegah scroll di level body */
+        }
+
+        /* --- CSS BARU UNTUK NAVIGASI LAYAR --- */
+        .screen {
+            display: none; /* Semua layar disembunyikan secara default */
+            width: 100%;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            visibility: hidden;
+        }
+
+        .screen.active {
+            display: flex; /* Menggunakan flexbox untuk konten layar */
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #start-screen, #rules-screen {
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+            background: url('https://png.pngtree.com/background/20230619/original/pngtree-decorative-3d-wood-wall-panels-texture-and-style-for-your-interior-picture-image_3850895.jpg') no-repeat center center;
+            background-size: cover;
+            color: white;
+            text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+        }
+
+        .welcome-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+
+        .welcome-buttons button, #rules-content button {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+            font-size: 1.2rem;
+            padding: 12px 24px;
+            margin: 10px;
+            cursor: pointer;
+            border: 2px solid white;
+            border-radius: 8px;
+            background-color: rgba(0,0,0,0.4);
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+        .welcome-buttons button:hover, #rules-content button:hover {
+            background-color: rgba(255,255,255,0.9);
+            color: black;
+            text-shadow: none;
+        }
+
+        #rules-screen {
+            justify-content: flex-start; /* Aturan mulai dari atas */
+            overflow-y: auto;
+        }
+
+        #rules-content {
+            background-color: rgba(0,0,0,0.6);
+            padding: 20px 40px;
+            border-radius: 12px;
+            max-width: 800px;
+            margin-top: 30px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+
+        #rules-content h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            text-align: center;
+        }
+        #rules-content ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        #rules-content li {
+            margin-bottom: 12px;
+            line-height: 1.6;
+        }
+        #rules-content strong {
+            color: #fcd34d; /* Kuning untuk highlight */
+        }
+        .rules-button-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+
+        /* Wrapper untuk game agar bisa disembunyikan/ditampilkan */
+        #game-wrapper {
+            display: flex; /* Overridden by .screen.active */
+            flex-direction: column;
+            height: 100vh;
+            width: 100%;
+        }
+
+
+        /* --- AKHIR DARI CSS BARU --- */
+
+        /* === PERUBAHAN CSS HEADER DIMULAI DI SINI === */
+        header {
+            background: url('https://png.pngtree.com/background/20230619/original/pngtree-decorative-3d-wood-wall-panels-texture-and-style-for-your-interior-picture-image_3850895.jpg') no-repeat center center;
+            background-size: cover;
+            color: white;
+            text-shadow: 1px 1px 6px rgba(0,0,0,0.7);
+            padding: 10px 25px; /* Sedikit padding horizontal */
+            user-select: none;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+            z-index: 10;
+            display: flex; /* Menggunakan flexbox untuk layout */
+            justify-content: space-between; /* Membuat jarak merata: item pertama ke kiri, tengah, item terakhir ke kanan */
+            align-items: center; /* Menyelaraskan item secara vertikal */
+        }
+        
+        #game-title {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+            font-size: 42px;
+            text-align: center; /* Memastikan teks judul tetap di tengah */
+            flex-grow: 1; /* Memungkinkan judul mengambil ruang ekstra jika perlu */
+        }
+
+        .header-nav-btn { /* Style baru untuk kedua tombol di header */
+             font-family: 'Montserrat', sans-serif;
+             font-size: 14px;
+             font-weight: 500;
+             padding: 8px 16px;
+             cursor: pointer;
+             border: 1px solid white;
+             border-radius: 6px;
+             background-color: rgba(0,0,0,0.3);
+             color: white;
+             text-shadow: none;
+             flex-shrink: 0; /* Mencegah tombol menyusut */
+        }
+         .header-nav-btn:hover {
+             background-color: rgba(255,255,255,0.9);
+             color: black;
+         }
+         /* === PERUBAHAN CSS HEADER SELESAI DI SINI === */
+
+        #turn-info {
+            background: #fcd34d; /* Default, will be overridden by JS */
+            color: black;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+            padding: 10px 0;
+            font-family: 'Roboto Mono', monospace;
+            user-select: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            z-index: 9;
+            transition: background-color 0.3s ease, color 0.3s ease; /* Smooth transition for background and text color */
+        }
+
+        .game-container {
+            flex: 1;
+            display: flex;
+            padding: 14px;
+            gap: 14px;
+            overflow: hidden;
+            perspective: 1000px; /* buat 3D terasa lebih nyata */
+        }
+
+        .players-column {
+            width: 23%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            background: #e2e8f0;
+            padding: 14px;
+            overflow-y: auto;
+            border-radius: 10px;
+            box-shadow: 0 0 6px rgba(0,0,0,0.1);
+        }
+
+        .player-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .player-name {
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 4px;
+            display: flex; /* Allow icon and text to be on the same line */
+            align-items: center; /* Vertically align icon and text */
+            gap: 8px; /* Space between icon and text */
+        }
+
+        /* Styling untuk ikon SVG */
+        .player-icon-svg {
+            width: 30px; /* Ukuran ikon SVG */
+            height: 30px; /* Ukuran ikon SVG */
+            vertical-align: middle; /* Sejajarkan vertikal dengan teks */
+        }
+
+        /* Warna fill untuk setiap bentuk berdasarkan pemain */
+        .player-icon-svg.player-1 .fill-color { fill: red; }
+        .player-icon-svg.player-2 .fill-color { fill: blue; }
+        .player-icon-svg.player-3 .fill-color { fill: yellow; }
+        .player-icon-svg.player-4 .fill-color { fill: green; }
+
+        .score {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .tiles {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(40px, 1fr));
+            grid-auto-rows: 40px;
+            gap: 6px;
+        }
+
+        /* ANIMASI BARU UNTUK TILES */
+        @keyframes tileFadeIn {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) rotateX(15deg);
+                filter: drop-shadow(0 3px 3px rgba(0,0,0,0.1));
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotateX(0deg);
+                filter: drop-shadow(0 5px 7px rgba(0,0,0,0.25));
+            }
+        }
+
+        .tile {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-weight: 700;
+            color: white;
+            cursor: grab;
+            font-size: 16px;
+            user-select: none;
+            box-shadow:
+                inset 0 2px 6px rgba(255,255,255,0.3),
+                0 5px 10px rgba(0,0,0,0.25);
+            transform-style: preserve-3d;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            opacity: 0; /* Awalnya tersembunyi */
+            background-clip: padding-box;
+            background-image:
+                linear-gradient(145deg, rgba(255,255,255,0.15), rgba(0,0,0,0.15));
+        }
+
+        /* Kelas untuk tile yang sudah aktif/terlihat - akan ditambahkan via JS */
+        .tile.active {
+            opacity: 1;
+            transform: scale(1) rotateX(0deg); /* Pastikan transform reset */
+            animation: tileFadeIn 0.6s ease forwards; /* Animasi diterapkan di sini */
+            animation-delay: var(--tile-delay, 0s); /* Gunakan custom property untuk delay */
+        }
+
+        .tile.merah {
+            background-color: #ef4444;
+            background-image:
+                linear-gradient(145deg, #f87171, #b91c1c);
+        }
+
+        .tile.biru {
+            background-color: #3b82f6;
+            background-image:
+                linear-gradient(145deg, #60a5fa, #1e40af);
+        }
+
+        .tile.kuning {
+            background-color: #facc15;
+            background-image:
+                linear-gradient(145deg, #fde047, #a16207);
+        }
+
+        .tile.hijau {
+            background-color: #16a34a;
+            background-image:
+                linear-gradient(145deg, #4ade80, #166534);
+        }
+
+        .tile:active {
+            cursor: grabbing;
+            box-shadow:
+                0 15px 25px rgba(0,0,0,0.45),
+                inset 0 3px 10px rgba(255,255,255,0.5);
+            transform: scale(1.15) rotateX(10deg) translateZ(15px);
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            z-index: 1000;
+            user-select: none;
+        }
+
+        .tile.selected {
+            outline: 3px solid black;
+            transform: scale(1.1) translateZ(10px);
+            z-index: 1;
+            box-shadow:
+                0 10px 18px rgba(0,0,0,0.4),
+                inset 0 2px 8px rgba(255,255,255,0.3);
+        }
+
+        .player-panel button {
+            padding: 8px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            background: #06b6d4; /* cyan */
+            color: black;
+            box-shadow: 0 3px 6px rgba(6,182,212,0.5);
+            transition: background-color 0.25s ease;
+        }
+
+        .player-panel button:disabled {
+            background: #94a3b8;
+            cursor: default;
+            box-shadow: none;
+        }
+
+        .player-panel button:hover:not(:disabled) {
+            background: #0891b2;
+            box-shadow: 0 5px 10px rgba(8,145,178,0.7);
+        }
+
+        .buttons {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+
+        #board-container {
+            flex: 2.5;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #cbd5e1;
+            padding: 14px;
+            overflow: auto;
+            border-radius: 10px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.15);
+            perspective: 1000px;
+        }
+
+        #board {
+            display: grid;
+            grid-template-columns: repeat(15, 40px);
+            grid-template-rows: repeat(12, 40px);
+            gap: 6px;
+            user-select: none;
+            transform-style: preserve-3d;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            background: #e2e8f0;
+            border-radius: 8px;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            color: white;
+            font-size: 14px;
+            transition: background-color 0.2s ease, transform 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: inset 0 0 6px #a0aec0;
+            cursor: default;
+            transform-style: preserve-3d;
+        }
+
+        .cell:hover {
+            transform: scale(1.05) translateZ(8px);
+            box-shadow:
+                0 10px 18px rgba(0,0,0,0.25),
+                inset 0 0 10px #a0aec0;
+            z-index: 10;
+        }
+
+        .cell.preview {
+            opacity: 0.6;
+            box-shadow: inset 0 0 0 3px rgba(0,0,0,0.3);
+        }
+
+        .cell.preview.merah  { background: rgba(239,68,68,0.4); }
+        .cell.preview.biru  { background: rgba(59,130,246,0.4); }
+        .cell.preview.kuning { background: rgba(250,204,21,0.5); }
+        .cell.preview.hijau  { background: rgba(22,163,74,0.4); }
+
+        .cell.bounce {
+            animation: bounce 0.3s ease;
+        }
+
+        @keyframes bounce {
+            0%   { transform: scale(1); }
+            50%  { transform: scale(1.3); }
+            100% { transform: scale(1); }
+        }
+
+        .merah { background: #ef4444; }
+        .biru { background: #3b82f6; }
+        .kuning { background: #facc15; }
+        .hijau { background: #16a34a; }
+
+        .players-column::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .players-column::-webkit-scrollbar-thumb {
+            background: #94a3b8;
+            border-radius: 4px;
+        }
+
+        #game-message-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.4s ease-out;
+        }
+
+        #game-message-text {
+            font-family: 'Press Start 2P', cursive;
+            font-size: 3.5em;
+            color: #FFF;
+            text-shadow: 2px 2px 0px #000, -2px -2px 0px #000, 2px -2px 0px #000, -2px 2px 0px #000;
+            white-space: pre;
+            letter-spacing: 0.1em;
+            overflow: hidden;
+            display: inline-block;
+            border-right: 3px solid transparent;
+            animation: blinkCursor 0.75s step-end infinite;
+        }
+
+        @keyframes blinkCursor {
+            from, to { border-color: transparent }
+            50% { border-color: #FFF; }
+        }
+
+        .game-message-typed #game-message-text {
+            border-right: none;
+            animation: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="start-screen" class="screen active">
+        <div class="welcome-content">
+            <h1 class="welcome-title">Number Pattern Tiles</h1>
+            <div class="welcome-buttons">
+                <button id="start-game-btn">Mulai Bermain</button>
+                <button id="view-rules-btn">Aturan Main</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="rules-screen" class="screen">
+        <div id="rules-content">
+            <h2>Aturan Main</h2>
+            <ul>
+                <li><strong>Tujuan:</strong> Mencetak skor tertinggi dengan menyusun ubin (tile) membentuk barisan di papan permainan.</li>
+                <li><strong>Barisan (Sequence):</strong> Sebuah barisan adalah deretan ubin <strong>satu warna</strong> yang lurus (horizontal atau vertikal) dengan nilai angka yang membentuk <strong>pola aritmatika atau geometri</strong>. Minimal 2 ubin untuk membentuk barisan.</li>
+                <li><strong>Skor:</strong> Pemain mendapatkan skor dari jumlah nilai semua ubin dalam barisan baru yang berhasil dibuat atau diperpanjang pada gilirannya.</li>
+                <li><strong>Giliran:</strong> Setiap pemain meletakkan satu ubin dari tangan ke papan per giliran.</li>
+                <li><strong>Aturan Penempatan:</strong>
+                    <ul>
+                        <li><strong>Ubin Pertama & Kedua:</strong> Ubin pertama bisa diletakkan di mana saja. Ubin kedua harus diletakkan bersebelahan (tidak diagonal) dengan ubin pertama dan harus berwarna sama.</li>
+                        <li><strong>Menyambung Warna Sama:</strong> Ubin harus diletakkan untuk menyambung atau membuat barisan lurus baru dengan ubin berwarna sama. Dilarang membuat "tikungan" atau "cabang" dengan warna yang sama.</li>
+                        <li><strong>Menyambung Warna Beda:</strong> Sebuah ubin boleh diletakkan di samping barisan (minimal 3 ubin) yang warnanya <strong>berbeda</strong>, dengan syarat:
+                            <ul>
+                                <li>Nilai angkanya harus sama dengan ubin di sebelahnya.</li>
+                                <li>Ubin baru ini tidak boleh menyentuh ubin lain yang warnanya sama dengannya.</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li><strong>Akhir Permainan:</strong> Permainan dapat diakhiri kapan saja. Pemain dengan skor tertinggi adalah pemenangnya.</li>
+            </ul>
+            <div class="rules-button-container">
+                <button id="start-from-rules-btn">Mulai Permainan</button>
+                <button id="back-to-start-btn">Kembali ke Awal</button>
+            </div>
+            </div>
+    </div>
+
+    <div id="game-wrapper" class="screen">
+        <header>
+            <button id="game-back-to-start-btn" class="header-nav-btn">Kembali ke Awal</button>
+            <span id="game-title">Number Pattern Tiles</span>
+            <button id="game-view-rules-btn" class="header-nav-btn">Lihat Aturan</button>
+        </header>
+        <div id="turn-info">Giliran Pemain 1</div>
+        <div class="game-container">
+            <div class="players-column" id="left-players"></div>
+            <div id="board-container">
+                <div id="board">
+                </div>
+            </div>
+            <div class="players-column" id="right-players"></div>
+        </div>
+
+        <div id="game-message-container">
+            <span id="game-message-text"></span>
+        </div>
+    </div>
+
+
+    <script>
+        // ===============================================
+        // Variabel Global dan Elemen DOM
+        // ===============================================
+        let gameState = 'IDLE'; 
+        const colors = ['merah', 'biru', 'kuning', 'hijau'];
+        const playerIcons = [
+            { type: 'pentagon', color: 'merah' },
+            { type: 'square', color: 'biru' },
+            { type: 'triangle', color: 'kuning' },
+            { type: 'circle', color: 'hijau' }
+        ];
+        const allTiles = [];
+        colors.forEach(color => {
+            for (let i = 1; i <= 20; i++) {
+                allTiles.push({ value: i, color });
+            }
+        });
+        const playerCount = 4;
+        let players = Array.from({ length: playerCount }, () => []);
+        let scores = Array(playerCount).fill(0);
+        let currentPlayer = 0;
+        const COLS = 15;
+        const ROWS = 12;
+        const board = Array(COLS * ROWS).fill(null); 
+        let draggingTileColor = null;
+        let draggingTileData = null;
+        const gameMessageContainer = document.getElementById('game-message-container');
+        const gameMessageText = document.getElementById('game-message-text');
+        const gameBoardEl = document.getElementById('board');
+
+        // --- ELEMEN DOM BARU ---
+        const startScreen = document.getElementById('start-screen');
+        const rulesScreen = document.getElementById('rules-screen');
+        const gameWrapper = document.getElementById('game-wrapper');
+        const startGameBtn = document.getElementById('start-game-btn');
+        const viewRulesBtn = document.getElementById('view-rules-btn');
+        const backToStartBtn = document.getElementById('back-to-start-btn');
+        const gameBackToStartBtn = document.getElementById('game-back-to-start-btn');
+        const gameViewRulesBtn = document.getElementById('game-view-rules-btn');
+        // === PENAMBAHAN ELEMEN TOMBOL BARU ===
+        const startFromRulesBtn = document.getElementById('start-from-rules-btn');
+
+
+        // ===============================================
+        // Fungsi Navigasi Layar BARU
+        // ===============================================
+        function showScreen(screenElement) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            screenElement.classList.add('active');
+        }
+
+        startGameBtn.addEventListener('click', () => {
+            showScreen(gameWrapper);
+            initializeNewGame();
+        });
+        
+        // === PENAMBAHAN EVENT LISTENER UNTUK TOMBOL BARU ===
+        startFromRulesBtn.addEventListener('click', () => {
+            showScreen(gameWrapper);
+            initializeNewGame();
+        });
+
+        viewRulesBtn.addEventListener('click', () => {
+            showScreen(rulesScreen);
+        });
+        
+        gameViewRulesBtn.addEventListener('click', () => {
+            showScreen(rulesScreen);
+        });
+
+        backToStartBtn.addEventListener('click', () => {
+            showScreen(startScreen);
+        });
+        
+        gameBackToStartBtn.addEventListener('click', () => {
+             // Reset game state before going to start
+            gameState = 'IDLE';
+            showScreen(startScreen);
+        });
+
+
+        // ===============================================
+        // Fungsi Animasi Pesan "Game Start" / "Game End"
+        // ===============================================
+        function hideGameMessage() {
+            gameMessageContainer.style.opacity = 0;
+            gameMessageContainer.classList.remove('game-message-typed');
+            gameMessageText.textContent = '';
+        }
+        function typeMessage(message, delayPerChar = 75) {
+            gameMessageText.textContent = '';
+            gameMessageContainer.classList.remove('game-message-typed');
+            let i = 0;
+            return new Promise(resolve => {
+                const typingInterval = setInterval(() => {
+                    if (i < message.length) {
+                        gameMessageText.textContent += message.charAt(i);
+                        i++;
+                    } else {
+                        clearInterval(typingInterval);
+                        gameMessageContainer.classList.add('game-message-typed');
+                        resolve();
+                    }
+                }, delayPerChar);
+            });
+        }
+        function showGameStartAnimation() {
+            gameMessageContainer.style.opacity = 1;
+            return typeMessage("GAME START", 100)
+                .then(() => new Promise(resolve => setTimeout(() => {
+                    gameMessageContainer.style.opacity = 0;
+                    setTimeout(() => { gameMessageText.textContent = ''; resolve(); }, 500);
+                }, 1200)));
+        }
+        function showGameEndAnimation(winner = null) {
+            gameMessageContainer.style.opacity = 1;
+            let message = "GAME OVER";
+            if (winner) {
+                message = `${winner} WINS!`;
+            } else { // Check for actual draw (all scores equal)
+                const allScoresEqual = scores.every(s => s === scores[0]);
+                if(scores.length > 0 && allScoresEqual && !winner) message = "DRAW!";
+                // if winner is null but scores are not all equal, find max score winner
+                else if (!winner) {
+                    const maxScore = Math.max(...scores);
+                    const winners = scores
+                        .map((s, idx) => s === maxScore ? `Pemain ${idx + 1}` : null)
+                        .filter(Boolean);
+                    if (winners.length === 1) message = `${winners[0]} WINS!`;
+                    else if (winners.length > 1) message = "DRAW!"; // Multiple winners with max score
+                }
+            }
+            return typeMessage(message, 100)
+                .then(() => new Promise(resolve => {
+                    setTimeout(() => {
+                        gameMessageContainer.style.opacity = 0;
+                        setTimeout(() => {
+                            gameMessageText.textContent = '';
+                            resolve();
+                        }, 500);
+                    }, 3000);
+                }));
+        }
+
+        // ===============================================
+        // Fungsi Animasi Tiles
+        // ===============================================
+        function animateTilesInSequence() {
+            return new Promise(resolve => {
+                let delay = 0;
+                const currentTilesInPlay = document.querySelectorAll('.player-panel .tile');
+                currentTilesInPlay.forEach(tile => tile.classList.remove('active'));
+                if (currentTilesInPlay.length === 0) { resolve(); return; }
+                let activatedTilesCount = 0;
+                currentTilesInPlay.forEach((tile) => {
+                    setTimeout(() => {
+                        tile.classList.add('active');
+                        activatedTilesCount++;
+                        if (activatedTilesCount === currentTilesInPlay.length) {
+                            setTimeout(resolve, 600); 
+                        }
+                    }, delay);
+                    delay += 50; 
+                });
+            });
+        }
+        function resetTileAnimations() {
+            const currentTilesInPlay = document.querySelectorAll('.player-panel .tile');
+            currentTilesInPlay.forEach(tile => {
+                tile.classList.remove('active');
+                tile.style.opacity = '0';
+                tile.style.transform = 'scale(0.8) rotateX(15deg)';
+            });
+        }
+
+        // ===============================================
+        // Fungsi Utama Permainan
+        // ===============================================
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+        function dealTiles() {
+            players = Array.from({ length: playerCount }, () => []); // Reset player hands
+            scores = Array(playerCount).fill(0); // Reset scores
+            currentPlayer = 0; // Start with Player 1
+            // Clear board (array)
+            for(let i=0; i<board.length; i++) board[i] = null;
+
+            const tempAllTiles = [];
+             colors.forEach(color => {
+                for (let i = 1; i <= 20; i++) {
+                    tempAllTiles.push({ value: i, color });
+                }
+            });
+            shuffle(tempAllTiles);
+            for (let i = 0; i < tempAllTiles.length; i++) {
+                players[i % playerCount].push(tempAllTiles[i]);
+            }
+        }
+        function updateTurnInfo() {
+            const turnInfoElement = document.getElementById("turn-info");
+            const currentPlayerIconData = playerIcons[currentPlayer];
+            let backgroundColor = '';
+            let textColor = 'black';
+            switch (currentPlayerIconData.color) {
+                case 'merah': backgroundColor = '#ef4444'; textColor = 'white'; break;
+                case 'biru': backgroundColor = '#3b82f6'; textColor = 'white'; break;
+                case 'kuning': backgroundColor = '#facc15'; textColor = 'black'; break;
+                case 'hijau': backgroundColor = '#16a34a'; textColor = 'white'; break;
+                default: backgroundColor = '#fcd34d'; textColor = 'black';
+            }
+            turnInfoElement.textContent = `Giliran Pemain ${currentPlayer + 1}`;
+            turnInfoElement.style.backgroundColor = backgroundColor;
+            turnInfoElement.style.color = textColor;
+        }
+        function skipTurn() {
+            if (gameState !== 'GAME_ACTIVE') return;
+            currentPlayer = (currentPlayer + 1) % playerCount;
+            updateTurnInfo();
+            renderPlayers(); 
+        }
+        function endGameAction() { 
+            if (gameState === 'GAME_ACTIVE' || gameState === 'GAME_OVER_ANIMATING') {
+                gameState = 'GAME_OVER_ANIMATING';
+                const maxScore = Math.max(...scores);
+                const winners = scores
+                    .map((s, idx) => s === maxScore ? `Pemain ${idx + 1}` : null)
+                    .filter(Boolean);
+                
+                let winnerString = null;
+                if (winners.length === 1) winnerString = winners[0];
+                else if (winners.length > 1 && winners.length < playerCount) winnerString = "DRAW AMONG WINNERS";
+                else if (winners.length === playerCount && scores.every(s => s === scores[0])) winnerString = null;
+                else if (winners.length > 1) winnerString = "DRAW!";
+
+
+                showGameEndAnimation(winnerString).then(() => {
+                    console.log("Game Over!");
+                    gameState = 'GAME_OVER';
+                });
+            }
+        }
+        function renderPlayerTilesInGrid(tiles, container, playerIndex) {
+            container.innerHTML = '';
+            container.className = 'tiles';
+            tiles.forEach((tile) => {
+                const t = document.createElement("div");
+                t.className = `tile ${tile.color}`;
+                t.textContent = tile.value;
+                t.classList.add('active');
+                if (playerIndex === currentPlayer && gameState === 'GAME_ACTIVE') {
+                    t.draggable = true;
+                    t.ondragstart = (e) => {
+                        draggingTileColor = tile.color;
+                        draggingTileData = tile;
+                        e.dataTransfer.setData("text/plain", JSON.stringify(tile));
+                    };
+                    t.onclick = () => {
+                        if (t.classList.contains('selected')) {
+                            t.classList.remove('selected');
+                        } else {
+                            container.querySelectorAll('.tile.selected').forEach(el => el.classList.remove('selected'));
+                            t.classList.add('selected');
+                        }
+                    };
+                } else {
+                    t.draggable = false;
+                    t.style.cursor = 'default';
+                }
+                container.appendChild(t);
+            });
+        }
+        function renderPlayers() {
+            const leftContainer = document.getElementById("left-players");
+            leftContainer.innerHTML = '';
+            for (let i = 0; i < Math.min(2, playerCount); i++) {
+                leftContainer.appendChild(createPlayerPanel(i));
+            }
+            const rightContainer = document.getElementById("right-players");
+            rightContainer.innerHTML = '';
+            for (let i = 2; i < playerCount; i++) {
+                rightContainer.appendChild(createPlayerPanel(i));
+            }
+            for (let i = 0; i < playerCount; i++) {
+                const playerTilesContainer = document.getElementById(`player${i}-tiles`);
+                if(playerTilesContainer) {
+                    renderPlayerTilesInGrid(players[i], playerTilesContainer, i);
+                }
+            }
+        }
+        function getPlayerSVGIcon(playerIndex) {
+            const iconData = playerIcons[playerIndex % playerIcons.length];
+            const iconType = iconData.type;
+            const iconColorClass = `player-${playerIndex + 1}`;
+            let svgContent = '';
+            switch (iconType) {
+                case 'pentagon': svgContent = `<svg class="player-icon-svg ${iconColorClass}" viewBox="0 0 100 100"><polygon class="fill-color" points="50,0 100,38 81,100 19,100 0,38" /></svg>`; break;
+                case 'square': svgContent = `<svg class="player-icon-svg ${iconColorClass}" viewBox="0 0 100 100"><rect class="fill-color" x="10" y="10" width="80" height="80" /></svg>`; break;
+                case 'triangle': svgContent = `<svg class="player-icon-svg ${iconColorClass}" viewBox="0 0 100 100"><polygon class="fill-color" points="50,0 100,100 0,100" /></svg>`; break;
+                case 'circle': svgContent = `<svg class="player-icon-svg ${iconColorClass}" viewBox="0 0 100 100"><circle class="fill-color" cx="50" cy="50" r="40" /></svg>`; break;
+            }
+            return svgContent;
+        }
+        function createPlayerPanel(i) {
+            const p = document.createElement('div');
+            p.className = 'player-panel';
+            p.innerHTML = `
+                <div class="player-name">
+                    ${getPlayerSVGIcon(i)}
+                    Pemain ${i + 1}
+                </div>
+                <div class="score" id="score-${i}">Skor: ${scores[i]}</div>
+                <div class="tiles" id="player${i}-tiles"></div>
+            `;
+            const btnWrap = document.createElement('div');
+            btnWrap.className = 'buttons';
+            const skipBtn = document.createElement('button');
+            skipBtn.textContent = 'Skip';
+            skipBtn.disabled = (i !== currentPlayer || gameState !== 'GAME_ACTIVE');
+            skipBtn.onclick = skipTurn;
+            const endBtn = document.createElement('button');
+            endBtn.textContent = 'Akhiri';
+            endBtn.onclick = endGameAction; 
+            btnWrap.appendChild(skipBtn);
+            btnWrap.appendChild(endBtn);
+            p.appendChild(btnWrap);
+            return p;
+        }
+        function clearPreviews() {
+            document.querySelectorAll('.cell.preview').forEach(c => {
+                c.classList.remove('preview', 'merah', 'biru', 'kuning', 'hijau');
+            });
+        }
+        function getTileAt(x, y, currentBoard = board) {
+            if (x < 0 || x >= COLS || y < 0 || y >= ROWS) return null;
+            const tile = currentBoard[y * COLS + x];
+            if (tile) {
+                return { ...tile, x: x, y: y };
+            }
+            return null;
+        }
+        function isArithmetic(nums) {
+            if (!nums || nums.length < 2) return false;
+            if (nums.length === 2) return true;
+            const diff = nums[1] - nums[0];
+            for (let i = 2; i < nums.length; i++) {
+                if (nums[i] - nums[i-1] !== diff) return false;
+            }
+            return true;
+        }
+        function isGeometric(nums) {
+            if (!nums || nums.length < 2) return false;
+            const allZeros = nums.every(n => n === 0);
+            if (allZeros) return true;
+            if (nums[0] === 0 && !allZeros) return false;
+            if (nums.length >= 2 && nums[0] !== 0 && nums[1] === 0) {
+                for (let i = 2; i < nums.length; i++) { if (nums[i] !== 0) return false; }
+                return true;
+            }
+            if (nums.some((n, index) => n === 0 && index > 0 && nums[index-1] !==0 )) return false;
+            if (nums.length === 2) return true;
+            const ratio = nums[1] / nums[0];
+            if (nums[0] === 0) return false;
+            for (let i = 2; i < nums.length; i++) {
+                if (nums[i-1] === 0) { return nums[i] === 0; }
+                if (Math.abs((nums[i] / nums[i-1]) - ratio) > 1e-9 ) { return false; }
+            }
+            return true;
+        }
+        function checkSequence(values) {
+            if (!values || values.length < 2) return false;
+            return isArithmetic(values) || isGeometric(values);
+        }
+        function getPotentialSequences(currentBoard = board) {
+            const collectedSequences = [];
+            const processedForHoriz = new Array(ROWS * COLS).fill(false);
+            const processedForVert = new Array(ROWS * COLS).fill(false);
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const cellIdx = r * COLS + c;
+                    if (currentBoard[cellIdx] && !processedForHoriz[cellIdx]) {
+                        let currentSequenceTiles = []; let tempC = c; const startColor = currentBoard[cellIdx].color;
+                        while (tempC < COLS && currentBoard[r * COLS + tempC] && currentBoard[r * COLS + tempC].color === startColor) {
+                            currentSequenceTiles.push({ ...currentBoard[r * COLS + tempC], x: tempC, y: r });
+                            processedForHoriz[r * COLS + tempC] = true; tempC++;
+                        }
+                        if (currentSequenceTiles.length > 0) {
+                            collectedSequences.push({ tiles: currentSequenceTiles, color: startColor, direction: 'H' });
+                        }
+                    }
+                }
+            }
+            for (let c = 0; c < COLS; c++) {
+                for (let r = 0; r < ROWS; r++) {
+                    const cellIdx = r * COLS + c;
+                    if (currentBoard[cellIdx] && !processedForVert[cellIdx]) {
+                        let currentSequenceTiles = []; let tempR = r; const startColor = currentBoard[cellIdx].color;
+                        while (tempR < ROWS && currentBoard[tempR * COLS + c] && currentBoard[tempR * COLS + c].color === startColor) {
+                            currentSequenceTiles.push({ ...currentBoard[tempR * COLS + c], x: c, y: tempR });
+                            processedForVert[tempR * COLS + c] = true; tempR++;
+                        }
+                        if (currentSequenceTiles.length > 0) {
+                            collectedSequences.push({ tiles: currentSequenceTiles, color: startColor, direction: 'V'});
+                        }
+                    }
+                }
+            }
+            return collectedSequences;
+        }
+        function checkRule3Strict(tileData, targetX, targetY, isCheckingHorizontal, currentBoard) {
+            const placedTile = { ...tileData, x: targetX, y: targetY }; 
+            let collectedTilesInLine = [placedTile];
+
+            const mainDX = isCheckingHorizontal ? 1 : 0;
+            const mainDY = isCheckingHorizontal ? 0 : 1;
+            
+            let side1Tiles = [];
+            let currentX = targetX - mainDX; 
+            let currentY = targetY - mainDY;
+            while (currentX >= 0 && currentX < COLS && currentY >= 0 && currentY < ROWS) {
+                const t = getTileAt(currentX, currentY, currentBoard);
+                if (t && t.color === tileData.color) { side1Tiles.unshift(t); currentX -= mainDX; currentY -= mainDY; } 
+                else { break; }
+            }
+            
+            let side2Tiles = [];
+            currentX = targetX + mainDX; 
+            currentY = targetY + mainDY;
+            while (currentX >= 0 && currentX < COLS && currentY >= 0 && currentY < ROWS) {
+                const t = getTileAt(currentX, currentY, currentBoard);
+                if (t && t.color === tileData.color) { side2Tiles.push(t); currentX += mainDX; currentY += mainDY; } 
+                else { break; }
+            }
+
+            collectedTilesInLine = [...side1Tiles, placedTile, ...side2Tiles]; 
+            const sequenceValues = collectedTilesInLine.map(t => t.value);
+
+            if (collectedTilesInLine.length < 2) { return false; } 
+            
+            if (!checkSequence(sequenceValues)) { return false; }
+
+            for (const tileInLine of collectedTilesInLine) {
+                if (tileInLine.x === targetX && tileInLine.y === targetY) { continue; }
+                
+                const orthoDX = isCheckingHorizontal ? 0 : 1;
+                const orthoDY = isCheckingHorizontal ? 1 : 0;
+                
+                const orthoNeighbor1 = getTileAt(tileInLine.x - orthoDX, tileInLine.y - orthoDY, currentBoard);
+                const orthoNeighbor2 = getTileAt(tileInLine.x + orthoDX, tileInLine.y + orthoDY, currentBoard);
+
+                if ((orthoNeighbor1 && orthoNeighbor1.color === tileData.color && !collectedTilesInLine.some(t => t.x === orthoNeighbor1.x && t.y === orthoNeighbor1.y)) ||
+                    (orthoNeighbor2 && orthoNeighbor2.color === tileData.color && !collectedTilesInLine.some(t => t.x === orthoNeighbor2.x && t.y === orthoNeighbor2.y))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function isValidPlacement(tileData, cellIndex) {
+            const numPlacedTilesTotal = board.filter(t => t !== null).length;
+            const targetX = cellIndex % COLS;
+            const targetY = Math.floor(cellIndex / COLS);
+
+            if (numPlacedTilesTotal === 0) {
+                return true; 
+            }
+
+            if (numPlacedTilesTotal === 1) {
+                const firstTileEntry = board.find(t => t !== null);
+                if (!firstTileEntry) return false;
+                const firstTilePosIndex = board.findIndex(t => t !== null);
+                const firstTileX = firstTilePosIndex % COLS;
+                const firstTileY = Math.floor(firstTilePosIndex / COLS);
+                const isAdjacent = (Math.abs(targetX - firstTileX) + Math.abs(targetY - firstTileY) === 1);
+                const isSameColor = (tileData.color === firstTileEntry.color);
+                return isAdjacent && isSameColor;
+            }
+
+            if (numPlacedTilesTotal >= 2) {
+                const tempBoardWithNewTile = [...board];
+                tempBoardWithNewTile[cellIndex] = {value: tileData.value, color: tileData.color};
+
+                if (checkRule3Strict(tileData, targetX, targetY, true, tempBoardWithNewTile) || 
+                    checkRule3Strict(tileData, targetX, targetY, false, tempBoardWithNewTile)) {
+                    return true;
+                }
+
+                const allBoardSequencesBeforePlacement = getPotentialSequences(board);
+                for (const seqData of allBoardSequencesBeforePlacement) { 
+                    if (seqData.tiles.length >= 3) {
+                        const sourceSequenceValues = seqData.tiles.map(t => t.value);
+                        if (isArithmetic(sourceSequenceValues) || isGeometric(sourceSequenceValues)) {
+                            const sourceSequenceColor = seqData.color;
+                            const sourceDirection = seqData.direction; 
+                            
+                            if (tileData.color === sourceSequenceColor) continue; 
+                            
+                            const occurrencesInSource = seqData.tiles.filter(t => t.value === tileData.value);
+                            
+                            if (occurrencesInSource.length > 0) {
+                                for (const occurrence of occurrencesInSource) { 
+                                    const x_source = occurrence.x; 
+                                    const y_source = occurrence.y;
+                                    let isValidPositionForRule4 = false;
+
+                                    if (sourceDirection === 'H') {
+                                        if (targetX === x_source && (targetY === y_source - 1 || targetY === y_source + 1)) {
+                                            isValidPositionForRule4 = true;
+                                        }
+                                    } else if (sourceDirection === 'V') {
+                                        if (targetY === y_source && (targetX === x_source - 1 || targetX === x_source + 1)) {
+                                            isValidPositionForRule4 = true;
+                                        }
+                                    }
+                                    
+                                    if (isValidPositionForRule4) {
+                                        const neighborDirs = [{dx: -1, dy: 0}, {dx: 1, dy: 0}, {dx: 0, dy: -1}, {dx: 0, dy: 1}];
+                                        let connectsToOwnColorElsewhere = false;
+                                        for (const dir of neighborDirs) {
+                                            const neighbor = getTileAt(targetX + dir.dx, targetY + dir.dy, board); 
+                                            if (neighbor && neighbor.color === tileData.color) {
+                                                connectsToOwnColorElsewhere = true; 
+                                                break;
+                                            }
+                                        }
+                                        if (!connectsToOwnColorElsewhere) { return true; }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+
+
+        function renderBoard() {
+            gameBoardEl.innerHTML = '';
+            for (let i = 0; i < ROWS * COLS; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                if (board[i]) {
+                    cell.textContent = board[i].value;
+                    cell.classList.add(board[i].color);
+                }
+                cell.ondragover = (e) => { e.preventDefault(); };
+                cell.ondragenter = (e) => {
+                    e.preventDefault();
+                    if (board[i] || !draggingTileColor || gameState !== 'GAME_ACTIVE') return;
+                    clearPreviews();
+                    cell.classList.add('preview', draggingTileColor);
+                };
+                cell.ondragleave = (e) => { cell.classList.remove('preview', 'merah', 'biru', 'kuning', 'hijau'); };
+                cell.ondrop = (e) => {
+                    e.preventDefault(); clearPreviews();
+                    if (board[i] || gameState !== 'GAME_ACTIVE') {
+                        draggingTileData = null; draggingTileColor = null; return;
+                    }
+                    const tileDataFromEvent = JSON.parse(e.dataTransfer.getData("text/plain"));
+                    if (!draggingTileData || tileDataFromEvent.value !== draggingTileData.value || tileDataFromEvent.color !== draggingTileData.color) {
+                        console.error("Mismatch or null drag data."); draggingTileData = null; draggingTileColor = null; return;
+                    }
+
+                    const sequencesBefore = getPotentialSequences(board);
+                    const validSequencesBeforeKeys = new Set();
+                    sequencesBefore.forEach(seq => {
+                        if (seq.tiles.length >=2 && checkSequence(seq.tiles.map(t=>t.value))) {
+                            validSequencesBeforeKeys.add(JSON.stringify(seq.tiles.map(t => ({x: t.x, y: t.y})).sort((a,b) => (a.x*COLS+a.y) - (b.x*COLS+b.y))) + seq.direction);
+                        }
+                    });
+
+                    if (!isValidPlacement(draggingTileData, i)) {
+                        alert("Gerakan tidak valid!"); draggingTileData = null; draggingTileColor = null; return;
+                    }
+                    board[i] = {value: draggingTileData.value, color: draggingTileData.color};
+                    const playerHand = players[currentPlayer];
+                    const tileIndexInHand = playerHand.findIndex(t => t.value === draggingTileData.value && t.color === draggingTileData.color);
+                    if (tileIndexInHand !== -1) {
+                        playerHand.splice(tileIndexInHand, 1);
+                        let scoreToAdd = 0;
+                        const sequencesAfter = getPotentialSequences(board);
+                        const scoredSequencesThisTurn = new Set();
+                        sequencesAfter.forEach(seq => {
+                            const values = seq.tiles.map(t => t.value);
+                            const sequenceKey = JSON.stringify(seq.tiles.map(t => ({x: t.x, y: t.y})).sort((a,b) => (a.x*COLS+a.y) - (b.x*COLS+b.y))) + seq.direction;
+                            if (seq.tiles.length >=2 && checkSequence(values) && !validSequencesBeforeKeys.has(sequenceKey)) {
+                                if (seq.tiles.some(tileInSeq => tileInSeq.x === (i % COLS) && tileInSeq.y === Math.floor(i / COLS))) {
+                                     if (!scoredSequencesThisTurn.has(sequenceKey)) {
+                                         scoreToAdd += values.reduce((sum, val) => sum + val, 0);
+                                         scoredSequencesThisTurn.add(sequenceKey);
+                                     }
+                                }
+                            }
+                        });
+                        scores[currentPlayer] += scoreToAdd;
+                        document.getElementById(`score-${currentPlayer}`).textContent = `Skor: ${scores[currentPlayer]}`;
+                        const justPlacedCell = gameBoardEl.children[i];
+                        if (justPlacedCell) justPlacedCell.classList.add('bounce');
+                        currentPlayer = (currentPlayer + 1) % playerCount;
+                        updateTurnInfo(); renderPlayers(); renderBoard();
+                    } else {
+                        console.error("Tile not in hand."); board[i] = null; 
+                    }
+                    draggingTileData = null; draggingTileColor = null;
+                };
+                gameBoardEl.appendChild(cell);
+            }
+        }
+
+        // ===============================================
+        // Fungsi Inisialisasi Game
+        // ===============================================
+        function initializeNewGame() {
+            gameState = 'IDLE';
+            dealTiles();
+            renderPlayers();
+            renderBoard();
+            updateTurnInfo();
+            initializeGameAnimationSequence();
+        }
+
+        function initializeGameAnimationSequence() {
+             if (gameState === 'IDLE' || gameState === 'GAME_OVER') {
+                gameState = 'ANIMATING_START_TILES';
+                hideGameMessage();
+                resetTileAnimations();
+                renderPlayers();
+
+                animateTilesInSequence()
+                    .then(() => showGameStartAnimation())
+                    .then(() => {
+                        gameState = 'GAME_ACTIVE';
+                        console.log("Game is now active!");
+                        renderPlayers(); 
+                    })
+                    .catch(error => {
+                        console.error("Error during game initialization animation:", error);
+                        gameState = 'IDLE';
+                    });
+            }
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+             showScreen(startScreen);
+        });
+    </script>
+</body>
+</html>
